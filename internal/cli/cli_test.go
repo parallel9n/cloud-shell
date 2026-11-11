@@ -162,6 +162,9 @@ func TestEnterDoesNotReplaceProcess(t *testing.T) {
 		return nil
 	}
 	r.Shell = func() string { return "/bin/zsh" }
+	r.Look = func(file string, _ []string) (string, error) {
+		return file, nil
+	}
 
 	if code := r.Run([]string{"hex"}); code != 0 {
 		t.Fatalf("enter code %d: %s", code, stderr.String())

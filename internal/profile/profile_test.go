@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -180,7 +181,7 @@ func TestExports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("aws config: %v", err)
 	}
-	if info.Mode().Perm() != 0o600 {
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		t.Fatalf("aws config mode = %o, want 600", info.Mode().Perm())
 	}
 }
