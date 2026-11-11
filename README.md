@@ -1,6 +1,8 @@
 # cloud-shell
 
-One static binary that points AWS, gcloud, Azure, kubectl, Claude, and .NET at a directory per customer. Shell startup stays your normal `~/.zshrc`. The active profile is drawn in the path segment (`hex Documents`).
+One static binary that points AWS, gcloud, Azure, kubectl, Claude, and .NET at a directory per customer. The profile name is a label you choose for that customer. Shell startup stays your normal `~/.zshrc`. The label is drawn in the path segment (`customer Documents`).
+
+[docs/getting-started.md](docs/getting-started.md) covers install, the first profile, and day-to-day use. [docs/layout.md](docs/layout.md) covers the repository layout. [docs/collaboration.md](docs/collaboration.md) covers issues, commits, and pull requests.
 
 Profiles live in `~/.cloud-profiles/<name>/`:
 
@@ -27,21 +29,22 @@ make install
 
 ## Use
 
+`customer` and `label` below are profile names, the labels for two customers.
+
 ```sh
 cloud-shell                  # list profiles (* marks the active one)
-cloud-shell init acme
-cloud-shell hex              # login shell with Hexagon paths
-cloud-shell hex az account show
-eval "$(cloud-shell env hex)"
+cloud-shell init customer
+cloud-shell customer         # login shell for the profile named customer
+cloud-shell label az account show
+eval "$(cloud-shell env customer)"
 cloud-shell current
 ```
 
-Aliases such as `hexagon` → `hex` are lines in `~/.config/cloud-shell/aliases`:
+Aliases such as `short` → `customer` are lines in `~/.config/cloud-shell/aliases`:
 
 ```
-hexagon hex
-hxr hex
-vik viking
+short customer
+abbr label
 ```
 
 ## Prompt and completion
@@ -77,3 +80,7 @@ Pushes to `main` that follow [Conventional Commits](https://www.conventionalcomm
 - Windows (`windows/amd64`, `windows/arm64`)
 
 `cloud-shell version` prints the release tag. A local build prints `dev`.
+
+## License
+
+[MIT](LICENSE)

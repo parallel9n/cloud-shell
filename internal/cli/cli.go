@@ -25,11 +25,11 @@ const usage = `Usage: cloud-shell [profile] [command...]
 Profiles live under $CLOUD_PROFILES_ROOT (default ~/.cloud-profiles).
 Aliases live in ~/.config/cloud-shell/aliases.
 
-Examples:
-  cloud-shell hex
-  cloud-shell hexagon az account show
-  eval "$(cloud-shell env hexagon)"
-  cloud-shell init acme
+Examples (customer and label are profile names you choose):
+  cloud-shell customer
+  cloud-shell label az account show
+  eval "$(cloud-shell env customer)"
+  cloud-shell init customer
 `
 
 // Runner executes cloud-shell commands.

@@ -1,2 +1,32 @@
+# Build output
 /cloud-shell
+/cloud-shell.exe
 /dist/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace and coverage
+go.work
+go.work.sum
+coverage.txt
+coverage.out
+*.prof
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*~

@@ -30,36 +30,36 @@ func writeAliases(t *testing.T, s Store, body string) {
 
 func TestCanonicalAlias(t *testing.T) {
 	s := newStore(t)
-	writeAliases(t, s, "# customers\nhexagon hex\nhxr hex\nvik viking\nvse=vse\n")
+	writeAliases(t, s, "# customers\nshort customer\nabbr customer\nalt label\nsame=same\n")
 
-	got, err := s.Canonical("hexagon")
+	got, err := s.Canonical("short")
 	if err != nil {
 		t.Fatalf("Canonical: %v", err)
 	}
-	if got != "hex" {
-		t.Fatalf("Canonical(hexagon) = %q, want hex", got)
+	if got != "customer" {
+		t.Fatalf("Canonical(short) = %q, want customer", got)
 	}
 
-	got, err = s.Canonical("vse")
+	got, err = s.Canonical("same")
 	if err != nil {
-		t.Fatalf("Canonical vse: %v", err)
+		t.Fatalf("Canonical same: %v", err)
 	}
-	if got != "vse" {
-		t.Fatalf("Canonical(vse) = %q, want vse", got)
+	if got != "same" {
+		t.Fatalf("Canonical(same) = %q, want same", got)
 	}
 }
 
 func TestResolveMissing(t *testing.T) {
 	s := newStore(t)
-	_, err := s.Resolve("hex")
+	_, err := s.Resolve("customer")
 	var missing *NotFoundError
 	if !errors.As(err, &missing) {
 		t.Fatalf("Resolve err = %v, want NotFoundError", err)
 	}
-	if missing.Name != "hex" {
-		t.Fatalf("Name = %q, want hex", missing.Name)
+	if missing.Name != "customer" {
+		t.Fatalf("Name = %q, want customer", missing.Name)
 	}
-	if _, statErr := os.Stat(filepath.Join(s.Root, "hex")); !os.IsNotExist(statErr) {
+	if _, statErr := os.Stat(filepath.Join(s.Root, "customer")); !os.IsNotExist(statErr) {
 		t.Fatal("Resolve created a missing profile")
 	}
 }
@@ -75,7 +75,7 @@ func TestRejectBadNames(t *testing.T) {
 
 func TestInitKeepsCredentials(t *testing.T) {
 	s := newStore(t)
-	lay, err := s.Init("hex")
+	lay, err := s.Init("customer")
 	if err != nil {
 		t.Fatalf("Init: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestInitKeepsCredentials(t *testing.T) {
 	if err := os.WriteFile(lay.AWSCreds, secret, 0o600); err != nil {
 		t.Fatalf("seed credentials: %v", err)
 	}
-	if _, err := s.Init("hex"); err != nil {
+	if _, err := s.Init("customer"); err != nil {
 		t.Fatalf("second Init: %v", err)
 	}
 	got, err := os.ReadFile(lay.AWSCreds)
@@ -121,15 +121,15 @@ func TestInitKeepsCredentials(t *testing.T) {
 
 func TestInitFollowsAlias(t *testing.T) {
 	s := newStore(t)
-	writeAliases(t, s, "hexagon hex\n")
-	lay, err := s.Init("hexagon")
+	writeAliases(t, s, "short customer\n")
+	lay, err := s.Init("short")
 	if err != nil {
 		t.Fatalf("Init: %v", err)
 	}
-	if lay.Name != "hex" {
-		t.Fatalf("name = %q, want hex", lay.Name)
+	if lay.Name != "customer" {
+		t.Fatalf("name = %q, want customer", lay.Name)
 	}
-	if _, err := os.Stat(filepath.Join(s.Root, "hexagon")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(s.Root, "short")); !os.IsNotExist(err) {
 		t.Fatal("init created the alias name instead of the target")
 	}
 }
@@ -140,22 +140,22 @@ func TestExports(t *testing.T) {
 		Root:      root,
 		AliasPath: filepath.Join(t.TempDir(), "aliases"),
 	}
-	lay, err := s.Init("hex")
+	lay, err := s.Init("customer")
 	if err != nil {
 		t.Fatalf("Init: %v", err)
 	}
-	extra := "FOO=bar baz\n# comment\n\nCLOUDSDK_ACTIVE_CONFIG_NAME=hex\nQUOTE=\"it's\"\n"
+	extra := "FOO=bar baz\n# comment\n\nCLOUDSDK_ACTIVE_CONFIG_NAME=customer\nQUOTE=\"it's\"\n"
 	if err := os.WriteFile(lay.EnvFile, []byte(extra), 0o644); err != nil {
 		t.Fatalf("env file: %v", err)
 	}
 
-	text, err := s.Exports("hex")
+	text, err := s.Exports("customer")
 	if err != nil {
 		t.Fatalf("Exports: %v", err)
 	}
 	checks := []string{
-		"export CLOUD_SHELL_PROFILE='hex'",
-		"export CLOUD_PROFILE='hex'",
+		"export CLOUD_SHELL_PROFILE='customer'",
+		"export CLOUD_PROFILE='customer'",
 		"export AZURE_CONFIG_DIR='" + lay.Azure + "'",
 		"export AWS_CONFIG_FILE='" + lay.AWSConfig + "'",
 		"export AWS_SHARED_CREDENTIALS_FILE='" + lay.AWSCreds + "'",
@@ -165,7 +165,7 @@ func TestExports(t *testing.T) {
 		"export DOTNET_CLI_HOME='" + lay.Dotnet + "'",
 		"export NUGET_PACKAGES='" + lay.NuGet + "'",
 		"export FOO='bar baz'",
-		"export CLOUDSDK_ACTIVE_CONFIG_NAME='hex'",
+		"export CLOUDSDK_ACTIVE_CONFIG_NAME='customer'",
 		`export QUOTE='it'\''s'`,
 	}
 	for _, want := range checks {
@@ -188,14 +188,14 @@ func TestExports(t *testing.T) {
 
 func TestBadEnvLine(t *testing.T) {
 	s := newStore(t)
-	lay, err := s.Init("hex")
+	lay, err := s.Init("customer")
 	if err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	if err := os.WriteFile(lay.EnvFile, []byte("NOT AN ASSIGNMENT\n"), 0o644); err != nil {
 		t.Fatalf("write env: %v", err)
 	}
-	if _, err := s.Exports("hex"); err == nil {
+	if _, err := s.Exports("customer"); err == nil {
 		t.Fatal("expected error for malformed env file")
 	}
 }
@@ -203,26 +203,26 @@ func TestBadEnvLine(t *testing.T) {
 func TestBadAliasLine(t *testing.T) {
 	s := newStore(t)
 	writeAliases(t, s, "only-one-field\n")
-	if _, err := s.Canonical("hex"); err == nil {
+	if _, err := s.Canonical("customer"); err == nil {
 		t.Fatal("expected alias parse error")
 	}
 }
 
 func TestNames(t *testing.T) {
 	s := newStore(t)
-	writeAliases(t, s, "hexagon hex\nvik viking\n")
-	if _, err := s.Init("hex"); err != nil {
-		t.Fatalf("Init hex: %v", err)
+	writeAliases(t, s, "short customer\nabbr label\n")
+	if _, err := s.Init("customer"); err != nil {
+		t.Fatalf("Init customer: %v", err)
 	}
-	if _, err := s.Init("viking"); err != nil {
-		t.Fatalf("Init viking: %v", err)
+	if _, err := s.Init("label"); err != nil {
+		t.Fatalf("Init label: %v", err)
 	}
 	names, err := s.Names()
 	if err != nil {
 		t.Fatalf("Names: %v", err)
 	}
 	got := strings.Join(names, ",")
-	if got != "hex,hexagon,vik,viking" {
+	if got != "abbr,customer,label,short" {
 		t.Fatalf("Names = %q", got)
 	}
 }
@@ -238,13 +238,13 @@ func TestMergeEnv(t *testing.T) {
 
 func TestDescribeDoesNotCreate(t *testing.T) {
 	s := newStore(t)
-	if err := os.MkdirAll(filepath.Join(s.Root, "hex"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(s.Root, "customer"), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	if _, err := s.Describe("hex"); err != nil {
+	if _, err := s.Describe("customer"); err != nil {
 		t.Fatalf("Describe: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(s.Root, "hex", "aws", "config")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(s.Root, "customer", "aws", "config")); !os.IsNotExist(err) {
 		t.Fatal("Describe created aws config")
 	}
 }

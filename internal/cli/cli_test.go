@@ -32,13 +32,13 @@ func runner(t *testing.T, store profile.Store) (Runner, *bytes.Buffer, *bytes.Bu
 
 func TestListMarksActive(t *testing.T) {
 	store := testStore(t)
-	if _, err := store.Init("hex"); err != nil {
-		t.Fatalf("init hex: %v", err)
+	if _, err := store.Init("customer"); err != nil {
+		t.Fatalf("init customer: %v", err)
 	}
-	if _, err := store.Init("vse"); err != nil {
-		t.Fatalf("init vse: %v", err)
+	if _, err := store.Init("label"); err != nil {
+		t.Fatalf("init label: %v", err)
 	}
-	t.Setenv("CLOUD_SHELL_PROFILE", "hex")
+	t.Setenv("CLOUD_SHELL_PROFILE", "customer")
 	t.Setenv("CLOUD_PROFILE", "")
 
 	r, stdout, stderr := runner(t, store)
@@ -46,7 +46,7 @@ func TestListMarksActive(t *testing.T) {
 		t.Fatalf("list code %d: %s", code, stderr.String())
 	}
 	got := stdout.String()
-	if !strings.Contains(got, "* hex\n") || !strings.Contains(got, "  vse\n") {
+	if !strings.Contains(got, "* customer\n") || !strings.Contains(got, "  label\n") {
 		t.Fatalf("list = %q", got)
 	}
 }
@@ -63,19 +63,19 @@ func TestListMissingRoot(t *testing.T) {
 
 func TestEnvAndCurrent(t *testing.T) {
 	store := testStore(t)
-	lay, err := store.Init("hex")
+	lay, err := store.Init("customer")
 	if err != nil {
 		t.Fatalf("init: %v", err)
 	}
 	if err := os.MkdirAll(filepath.Dir(store.AliasPath), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	if err := os.WriteFile(store.AliasPath, []byte("hexagon hex\n"), 0o644); err != nil {
+	if err := os.WriteFile(store.AliasPath, []byte("short customer\n"), 0o644); err != nil {
 		t.Fatalf("aliases: %v", err)
 	}
 
 	r, stdout, stderr := runner(t, store)
-	if code := r.Run([]string{"env", "hexagon"}); code != 0 {
+	if code := r.Run([]string{"env", "short"}); code != 0 {
 		t.Fatalf("env code %d: %s", code, stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "export AZURE_CONFIG_DIR='"+lay.Azure+"'") {
@@ -96,7 +96,7 @@ func TestEnvAndCurrent(t *testing.T) {
 
 func TestMissingProfileListsAvailable(t *testing.T) {
 	store := testStore(t)
-	if _, err := store.Init("viking"); err != nil {
+	if _, err := store.Init("label"); err != nil {
 		t.Fatalf("init: %v", err)
 	}
 	r, _, stderr := runner(t, store)
@@ -104,7 +104,7 @@ func TestMissingProfileListsAvailable(t *testing.T) {
 		t.Fatalf("code = %d", code)
 	}
 	got := stderr.String()
-	if !strings.Contains(got, "not found") || !strings.Contains(got, "viking") {
+	if !strings.Contains(got, "not found") || !strings.Contains(got, "label") {
 		t.Fatalf("stderr = %s", got)
 	}
 }
@@ -148,7 +148,7 @@ func TestHookAndCompletion(t *testing.T) {
 
 func TestEnterDoesNotReplaceProcess(t *testing.T) {
 	store := testStore(t)
-	if _, err := store.Init("hex"); err != nil {
+	if _, err := store.Init("customer"); err != nil {
 		t.Fatalf("init: %v", err)
 	}
 	var argv0 string
@@ -166,24 +166,24 @@ func TestEnterDoesNotReplaceProcess(t *testing.T) {
 		return file, nil
 	}
 
-	if code := r.Run([]string{"hex"}); code != 0 {
+	if code := r.Run([]string{"customer"}); code != 0 {
 		t.Fatalf("enter code %d: %s", code, stderr.String())
 	}
 	if argv0 != "/bin/zsh" || strings.Join(argv, " ") != "/bin/zsh -l" {
 		t.Fatalf("exec argv0=%s argv=%v", argv0, argv)
 	}
-	if !strings.Contains(stderr.String(), "entered profile 'hex'") {
+	if !strings.Contains(stderr.String(), "entered profile 'customer'") {
 		t.Fatalf("stderr = %s", stderr.String())
 	}
 	if stdout.Len() != 0 {
 		t.Fatalf("interactive enter wrote stdout: %s", stdout.String())
 	}
-	if !hasEnv(env, "CLOUD_SHELL_PROFILE", "hex") || !hasEnv(env, "KUBECONFIG", filepath.Join(store.Root, "hex", "kube", "config")) {
+	if !hasEnv(env, "CLOUD_SHELL_PROFILE", "customer") || !hasEnv(env, "KUBECONFIG", filepath.Join(store.Root, "customer", "kube", "config")) {
 		t.Fatal("profile environment was not applied")
 	}
 
 	argv = nil
-	if code := r.Run([]string{"hex", "echo", "hi"}); code != 0 {
+	if code := r.Run([]string{"customer", "echo", "hi"}); code != 0 {
 		t.Fatalf("command code %d: %s", code, stderr.String())
 	}
 	if len(argv) < 2 || argv[0] != "echo" || argv[1] != "hi" {
